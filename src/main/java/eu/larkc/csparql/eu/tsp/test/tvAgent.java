@@ -1,54 +1,15 @@
 package eu.larkc.csparql.eu.tsp.test;
 
-import eu.larkc.csparql.cep.api.RdfStream;
-import eu.larkc.csparql.common.RDFTable;
-import eu.larkc.csparql.common.RDFTuple;
+import eu.larkc.csparql.core.engine.ConsoleFormatter;
 import eu.larkc.csparql.core.engine.CsparqlEngineImpl;
 import eu.larkc.csparql.core.engine.CsparqlQueryResultProxy;
-import eu.larkc.csparql.core.engine.RDFStreamFormatter;
-import eu.larkc.csparql.eu.tsp.test.streamer.CouchStreamer;
 import eu.larkc.csparql.eu.tsp.test.streamer.TvStreamer;
-import jade.core.AID;
-import jade.core.Agent;
-import jade.core.behaviours.FSMBehaviour;
-import jade.core.behaviours.OneShotBehaviour;
-import jade.domain.DFService;
-import jade.domain.FIPAAgentManagement.DFAgentDescription;
-import jade.domain.FIPAAgentManagement.ServiceDescription;
-import jade.domain.FIPAException;
-import jade.lang.acl.ACLMessage;
+
 import org.apache.log4j.PropertyConfigurator;
-import org.lorislab.clingo4j.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Iterator;
-import java.util.Observable;
-import java.util.Observer;
-
-public class tvAgent extends Agent {
-
-    AID agentClingo;
-
-    public void setup(){
-        System.out.println("Hello World! My name is " + this.getLocalName());
-
-        /** Chercher le service Clingo */
-        addBehaviour(new jade.core.behaviours.OneShotBehaviour() {
-             public void action() {
-                 agentClingo = searchClingo();
-             }
-         });
-
-        /** Lancer le traitement => Simulation Stream et execution requete*/
-        addBehaviour(new jade.core.behaviours.OneShotBehaviour(){
-            public void action(){
-                startTraitement();
-            }
-        });
-
-
-    }
+public class tvAgent {
 
     private static Logger logger = LoggerFactory.getLogger(tvAgent.class);
 
@@ -56,8 +17,8 @@ public class tvAgent extends Agent {
      * ECARE-HOME Reasoning example
      */
 
-    //public static void main(String[] args) {
-    public void startTraitement(){
+    //  startTraitement
+    public static void main(String[] args) {
         try{
 
            //Configure log4j logger for the csparql engine
@@ -114,16 +75,7 @@ public class tvAgent extends Agent {
 
             CsparqlQueryResultProxy streamQ2 = engine.registerQuery(streamCleanTv, false);
 
-            //Attach a result consumer to the query result proxy to generate a new streams
-            RdfStream cleanTv = new RDFStreamFormatter("http://ecareathome.org/stream#cleantv");
-
-            //streamQ1.addObserver(new ConsoleFormatter());
-            //streamQ2.addObserver((RDFStreamFormatter) cleanTv);
-
-            CustomFormatter3 co = new CustomFormatter3(agentClingo);
-            streamQ2.addObserver((CustomFormatter3) co);
-
-            //engine.registerStream(cleanTv);
+            streamQ2.addObserver(new ConsoleFormatter());
 
             //Start streaming data
             TvThread.start();
@@ -134,54 +86,4 @@ public class tvAgent extends Agent {
         }
     }
 
-
-    public AID searchClingo(){
-        DFAgentDescription dfd = new DFAgentDescription();
-        ServiceDescription sd  = new ServiceDescription();
-        sd.setType( "clingo-service" );
-        dfd.addServices(sd);
-        try {
-            DFAgentDescription[] result = new DFAgentDescription[0];
-            result = DFService.search(this, dfd);
-
-            System.out.println(result.length + " results recherche Clingo" );
-            if (result.length>0) {
-                System.out.println(" " + result[0].getName());
-                return result[0].getName();
-            }
-        } catch (FIPAException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public class CustomFormatter3 extends Observable implements Observer {
-        AID currentAgent = null;
-        public CustomFormatter3(AID agent) {
-            super();
-            this.currentAgent = agent;
-        }
-
-        public void update(Observable o, Object arg) {
-            RDFTable q = (RDFTable)arg;
-            System.out.println();
-            System.out.println("-------" + q.toString() +"\n" + q.size() + " results at SystemTime=[" + System.currentTimeMillis() + "]--------");
-            Iterator var4 = q.iterator();
-
-            ACLMessage message = new ACLMessage(ACLMessage.INFORM);
-            message.addReceiver(currentAgent);
-            message.setContent(q.toString());
-            send(message);
-
-            while(var4.hasNext()) {
-                RDFTuple t = (RDFTuple)var4.next();
-                //System.out.println(t.toString().replaceAll("\t", ",").substring(0, t.toString().length()-1));
-                //this.put(t.toString().replaceAll("\t", ",").substring(0, t.toString().length()-1));
-                //System.out.println("agentClingo" + currentAgent.getLocalName() + "\n" + t.toString());
-
-            }
-
-            System.out.println();
-        }
-    }
 }

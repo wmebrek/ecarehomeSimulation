@@ -1,20 +1,13 @@
 package eu.larkc.csparql.eu.tsp.test;
 
 import eu.larkc.csparql.cep.api.RdfStream;
-import eu.larkc.csparql.common.utils.CsparqlUtils;
-import eu.larkc.csparql.common.utils.ReasonerChainingType;
 import eu.larkc.csparql.core.engine.ConsoleFormatter;
 import eu.larkc.csparql.core.engine.CsparqlEngineImpl;
 import eu.larkc.csparql.core.engine.CsparqlQueryResultProxy;
 import eu.larkc.csparql.core.engine.RDFStreamFormatter;
-import eu.larkc.csparql.eu.tsp.test.streamer.AdditionStreamer;
 import eu.larkc.csparql.eu.tsp.test.streamer.CouchStreamer;
 import eu.larkc.csparql.eu.tsp.test.streamer.TvStreamer;
-import eu.larkc.csparql.sr4ld2014.SR4LD2014_Ex6;
-import eu.larkc.csparql.sr4ld2014.streamer.FacebookStreamer;
-import eu.larkc.csparql.sr4ld2014.streamer.SensorsStreamer;
 import org.apache.log4j.PropertyConfigurator;
-import org.lorislab.clingo4j.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -214,9 +207,7 @@ public class ECareHome {
             //Register new query in the engine
             CsparqlQueryResultProxy streamPartition = engine.registerQuery(streamPartitioned, false);
 
-            streamPartition.addObserver(new CustomFormatter());
-            //streamPartition.addObserver(new ConsoleFormatter());
-            //clingoCall();
+            streamPartition.addObserver(new ConsoleFormatter());
 
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
@@ -224,26 +215,4 @@ public class ECareHome {
 
     }
 
-    static void clingoCall(){
-        Clingo.init("D:\\clingo4j\\src\\main\\clingo");
-
-        try (Clingo control = Clingo.create()) {
-            System.out.println(control.getVersion());
-            //control.add("base", "b :- not a. a :- not b.");
-            //control.ground("base");
-            control.load("D:\\clingo4j\\src\\main\\clingo\\clingoRules.lp");
-            control.ground("base");
-
-            try (SolveHandle handle = control.solve()) {
-                for (Model model : handle)  {
-                    System.out.println("Model type: " + model.getType());
-                    for (Symbol atom : model.getSymbols()) {
-                        System.out.println(atom);
-                    }
-                }
-            }
-        } catch (ClingoException ex) {
-            System.err.println(ex.getMessage());
-        }
-    }
 }
