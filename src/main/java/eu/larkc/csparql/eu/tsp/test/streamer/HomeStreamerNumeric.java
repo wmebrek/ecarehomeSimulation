@@ -9,19 +9,19 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 import static eu.larkc.csparql.eu.tsp.test.Utils.*;
 
-public class HomeStreamer extends RdfStream implements Runnable  {
+public class HomeStreamerNumeric extends RdfStream implements Runnable  {
 
     private long sleepTime;
     private String baseUri;
+    private static Logger logger = LoggerFactory.getLogger(TvStreamer.class);
 
-    private static Logger logger = LoggerFactory.getLogger(CouchStreamer.class);
-
-    public HomeStreamer(String iri, String baseUri, long sleepTime) {
+    public HomeStreamerNumeric(String iri, String baseUri, long sleepTime) {
         super(iri);
         this.sleepTime = sleepTime;
         this.baseUri = baseUri;
@@ -29,15 +29,15 @@ public class HomeStreamer extends RdfStream implements Runnable  {
 
     public void run() {
 
-        // dataset path
+
         String fileName = "D:/CSPARQL-ReadyToGoPack/examples_files/ann.txt";
 
         //read file into stream, try-with-resources
         try (Stream<String> stream = Files.lines(Paths.get(fileName))) {
 
             stream.forEach(line -> {
-                try{
-                    //String[] split = line.split("\t");
+                try {
+
                     String typeCapteur ;
                     String[] split = line.split("\t");
                     String acrTypeCapteur;
@@ -90,10 +90,12 @@ public class HomeStreamer extends RdfStream implements Runnable  {
                     }
 
                     String valeurCapteur = split[2];
-                    String valeurCapteurNormalize ;
 
-                    if (isBooleanHerit(valeurCapteur) && typeCapteur != "unknown_sensors"){
-                        valeurCapteurNormalize = "\""+ getBooleanFromBooleanValue(valeurCapteur) + "\"^^http://www.w3.org/2001/XMLSchema#boolean";
+                    //String valeurCapteur = split[3];
+                    String valeurCapteurNormalize;
+
+                    if (isInteger(valeurCapteur) && typeCapteur != "unknown_sensors") {
+                        valeurCapteurNormalize = getTypeValeur(valeurCapteur);
 
                         //String typeCapteur = split[0];
 
@@ -102,30 +104,30 @@ public class HomeStreamer extends RdfStream implements Runnable  {
 
                         RdfQuadruple q = new RdfQuadruple("_:" + observationIndex, "http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#isObservableAt", observationTime, System.currentTimeMillis());
                         this.put(q);
-                        q = new RdfQuadruple("_:" + observationIndex, "http://www.w3.org/ns/sosa/isObservedBy" , split[1], System.currentTimeMillis());
+                        q = new RdfQuadruple("_:" + observationIndex, "http://www.w3.org/ns/sosa/isObservedBy", split[1], System.currentTimeMillis());
                         this.put(q);
 
-                        q = new RdfQuadruple("_:" + observationIndex, "http://www.w3.org/ns/sosa/madeBySensor" , typeCapteur, System.currentTimeMillis());
+                        q = new RdfQuadruple("_:" + observationIndex, "http://www.w3.org/ns/sosa/madeBySensor", typeCapteur, System.currentTimeMillis());
                         this.put(q);
 
-                        q = new RdfQuadruple("_:" + observationIndex, "http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#hasLocation" , room, System.currentTimeMillis());
+                        q = new RdfQuadruple("_:" + observationIndex, "http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#hasLocation", room, System.currentTimeMillis());
                         this.put(q);
 
 
-                        q = new RdfQuadruple("_:" + observationIndex, "http://www.w3.org/ns/sosa/hasSimpleResult" , valeurCapteurNormalize, System.currentTimeMillis());
+                        q = new RdfQuadruple("_:" + observationIndex, "http://www.w3.org/ns/sosa/hasSimpleResult", valeurCapteurNormalize, System.currentTimeMillis());
                         this.put(q);
 
                         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss+SSS");
 
-                        q = new RdfQuadruple( observationTime, "http://w3id.org/ecareathome/patterns/timeinterval.owl#hasUpperTimeStampValue", sdf.format(new Date()) + "^^http://www.w3.org/2001/XMLSchema#dateTime", System.currentTimeMillis());
+                        q = new RdfQuadruple(observationTime, "http://w3id.org/ecareathome/patterns/timeinterval.owl#hasUpperTimeStampValue", sdf.format(new Date()) + "^^http://www.w3.org/2001/XMLSchema#dateTime", System.currentTimeMillis());
                         this.put(q);
-                        q = new RdfQuadruple( observationTime, "http://w3id.org/ecareathome/patterns/timeinterval.owl#hasLowerTimeStampValue", sdf.format(new Date()) + "^^http://www.w3.org/2001/XMLSchema#dateTime", System.currentTimeMillis());
+                        q = new RdfQuadruple(observationTime, "http://w3id.org/ecareathome/patterns/timeinterval.owl#hasLowerTimeStampValue", sdf.format(new Date()) + "^^http://www.w3.org/2001/XMLSchema#dateTime", System.currentTimeMillis());
                         this.put(q);
 
-                        logger.info("Couch Data sent => {}",line);
+                        logger.info("TV Data sent => {}",line);
                         Thread.sleep(sleepTime);
                     }
-                } catch(Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
 
@@ -133,9 +135,7 @@ public class HomeStreamer extends RdfStream implements Runnable  {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
-
 
 
 }
